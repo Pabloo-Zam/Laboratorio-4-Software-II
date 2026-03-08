@@ -242,7 +242,7 @@ export default function App() {
           <div>
             <h1 style={styles.title}>Gestión de Tareas</h1>
             <p style={styles.subtitle}>
-              Módulo web: creación y publicación de tareas (Frontend React + API Flask)
+              Módulo web:creación y publicación de tareas (Frontend React + API Flask)
             </p>
           </div>
 
