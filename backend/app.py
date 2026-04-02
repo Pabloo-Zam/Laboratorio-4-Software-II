@@ -209,5 +209,21 @@ def delete_task(task_id: int):
 
     return jsonify({"message": "Tarea eliminada"}), 200
 
+@app.get("/api/falla-intencional")
+def falla_intencional():
+    """Endpoint creado a propósito para reprobar el Quality Gate"""
+    
+    # FALLA 1: Vulnerabilidad crítica (Security Rating cae a 'E')
+    # SonarQube detectará credenciales "hardcodeadas" en el texto.
+    secret_db_password = "my_super_secret_password_123"
+    
+    return jsonify({"msg": "Probando falla", "pwd": secret_db_password})
+    
+    # FALLA 2: Bug de código (Reliability Rating cae a 'E')
+    # SonarQube detectará que este código es inalcanzable (unreachable code)
+    # porque está después de un 'return'.
+    print("Este mensaje nunca se imprimirá")
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
