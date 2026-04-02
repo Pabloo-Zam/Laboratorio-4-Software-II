@@ -1,5 +1,5 @@
 """Modulo para creacion y publicacion de tareas en 
-un sistema de gestion de tareas universitarias."""
+un sistema de gestion de tareas universitarias pruebas"""
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
