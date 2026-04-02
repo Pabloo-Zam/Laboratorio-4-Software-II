@@ -1,0 +1,58 @@
+name: IS2 CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Node.js (Frontend)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Instalar dependencias del Frontend
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Ejecutar pruebas del Frontend
+        working-directory: ./frontend
+        run: npm test --if-present
+
+      - name: Configurar Python (Backend)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias del Backend
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pylint coverage
+
+      - name: Ejecutar pruebas y análisis del Backend
+        working-directory: ./backend
+        run: |
+          coverage run -m pytest
+          coverage xml
+          pylint app.py db.py || true
+
+      - name: SonarQube Cloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
