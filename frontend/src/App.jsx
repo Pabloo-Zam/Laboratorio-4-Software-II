@@ -253,7 +253,7 @@ export default function App() {
 
         <div style={styles.controls}>
           <label style={styles.label}>
-            Rol
+            <span>Rol</span>
             <select value={role} onChange={(e) => setRole(e.target.value)} style={styles.input}>
               <option value="student">student</option>
               <option value="teacher">teacher</option>
@@ -261,7 +261,7 @@ export default function App() {
           </label>
 
           <label style={styles.label}>
-            Curso (filtro)
+            <span>Curso (filtro)</span>
             <input
               value={courseFilter}
               onChange={(e) => setCourseFilter(e.target.value)}
@@ -280,18 +280,18 @@ export default function App() {
             <form onSubmit={createTask} style={{ display: "grid", gap: 12 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <label style={styles.label}>
-                  Curso
+                  <span>Curso</span>
                   <input value={courseCode} onChange={(e) => setCourseCode(e.target.value)} style={styles.input} />
                 </label>
 
                 <label style={styles.label}>
-                  Fecha límite
+                  <span>Fecha límite</span>
                   <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} style={styles.input} />
                 </label>
               </div>
 
               <label style={styles.label}>
-                Título
+                <span>Título</span>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -301,7 +301,7 @@ export default function App() {
               </label>
 
               <label style={styles.label}>
-                Descripción
+                <span>Descripción</span>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -313,7 +313,7 @@ export default function App() {
 
               <label style={{ display: "flex", gap: 10, alignItems: "center", fontSize: 13, color: "#1F2A44" }}>
                 <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
-                Publicar de una vez
+                <span>Publicar de una vez</span>
               </label>
 
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -346,9 +346,7 @@ export default function App() {
             {tasks.map((t) => (
               <div key={t.id} style={styles.taskCard}>
                 <div style={styles.taskTop}>
-                  {/* IMPORTANTE: No mostramos [SW2] ni el id */}
                   <h3 style={styles.taskTitle}>{t.title}</h3>
-
                   <span style={styles.pill(t.published)}>{t.published ? "Publicada" : "Borrador"}</span>
                 </div>
 
