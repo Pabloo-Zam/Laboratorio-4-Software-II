@@ -1,5 +1,4 @@
-"""Modulo para creacion y publicacion de tareas en 
-un sistema de gestion de tareas universitarias."""
+"""Modulo para gestion de tarea"""
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
@@ -13,6 +12,8 @@ CORS(app)
 
 init_db()
 
+# CONSTANTE PARA EVITAR DUPLICACIÓN DE CÓDIGO (SonarQube Fix)
+MSG_TASK_NOT_FOUND = "Tarea no encontrada"
 
 def get_role() -> str:
     """
@@ -21,14 +22,12 @@ def get_role() -> str:
     """
     return (request.headers.get("X-Role") or "student").strip().lower()
 
-
 def parse_date_yyyy_mm_dd(value: str) -> date | None:
     """Convierte un string YYYY-MM-DD en un objeto date."""
     try:
         return datetime.strptime(value, "%Y-%m-%d").date()
     except ValueError:
         return None
-
 
 def task_row_to_dict(row) -> dict:
     """Transforma una fila de SQLite en un diccionario de Python."""
@@ -48,7 +47,6 @@ def health():
     """Verifica el estado de disponibilidad del servidor."""
     return jsonify({"status": "ok"}), 200
 
-
 @app.get("/api/tasks")
 def list_tasks():
     """
@@ -62,33 +60,27 @@ def list_tasks():
     conn = get_conn()
     cur = conn.cursor()
 
-    if role == "teacher":
-        if course:
-            rows = cur.execute(
-                "SELECT * FROM tasks WHERE course_code=? ORDER BY id DESC",
-                (course,),
-            ).fetchall()
-        else:
-            rows = cur.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()
-    else:
-        if course:
-            rows = cur.execute(
-                """
-                SELECT * FROM tasks
-                WHERE published=1 AND course_code=?
-                ORDER BY id DESC
-                """,
-                (course,),
-            ).fetchall()
-        else:
-            rows = cur.execute(
-                "SELECT * FROM tasks WHERE published=1 ORDER BY id DESC"
-            ).fetchall()
+    # REFACTORIZADO: Reducción de Complejidad Cognitiva (SonarQube Fix)
+    query = "SELECT * FROM tasks"
+    conditions = []
+    params = []
 
+    if role != "teacher":
+        conditions.append("published=1")
+
+    if course:
+        conditions.append("course_code=?")
+        params.append(course)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY id DESC"
+
+    rows = cur.execute(query, tuple(params)).fetchall()
     conn.close()
 
     return jsonify([task_row_to_dict(r) for r in rows]), 200
-
 
 @app.get("/api/tasks/<int:task_id>")
 def get_task(task_id: int):
@@ -106,13 +98,12 @@ def get_task(task_id: int):
     conn.close()
 
     if not row:
-        return jsonify({"error": "Tarea no encontrada"}), 404
+        return jsonify({"error": MSG_TASK_NOT_FOUND}), 404
 
     if role != "teacher" and not bool(row["published"]):
         return jsonify({"error": "No autorizado para ver esta tarea"}), 403
 
     return jsonify(task_row_to_dict(row)), 200
-
 
 @app.post("/api/tasks")
 def create_task():
@@ -135,17 +126,13 @@ def create_task():
     published = 1 if bool(body.get("published")) else 0
     created_by = (body.get("created_by") or "teacher").strip()
 
-    error_msg = None
-
-    if not (course_code := (body.get("course_code") or "").strip()):
-        error_msg = "course_code es obligatorio"
-    elif len(title := (body.get("title") or "").strip()) < 5:
-        error_msg = "title debe tener al menos 5 caracteres"
-    elif len(description := (body.get("description") or "").strip()) < 10:
-        error_msg = "description debe tener al menos 10 caracteres"
-
-    if error_msg:
-        return jsonify({"error": error_msg}), 400
+    # REFACTORIZADO: Eliminación de asignaciones complejas redundantes (SonarQube Fix)
+    if not course_code:
+        return jsonify({"error": "course_code es obligatorio"}), 400
+    if len(title) < 5:
+        return jsonify({"error": "title debe tener al menos 5 caracteres"}), 400
+    if len(description) < 10:
+        return jsonify({"error": "description debe tener al menos 10 caracteres"}), 400
 
     due = parse_date_yyyy_mm_dd(due_date_str)
     if not due:
@@ -171,7 +158,6 @@ def create_task():
 
     return jsonify({"id": task_id, "message": "Tarea creada"}), 201
 
-
 @app.patch("/api/tasks/<int:task_id>/publish")
 def publish_task(task_id: int):
     """
@@ -187,7 +173,7 @@ def publish_task(task_id: int):
     row = cur.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
     if not row:
         conn.close()
-        return jsonify({"error": "Tarea no encontrada"}), 404
+        return jsonify({"error": MSG_TASK_NOT_FOUND}), 404
 
     if bool(row["published"]):
         conn.close()
@@ -198,7 +184,6 @@ def publish_task(task_id: int):
     conn.close()
 
     return jsonify({"message": "Tarea publicada"}), 200
-
 
 @app.delete("/api/tasks/<int:task_id>")
 def delete_task(task_id: int):
@@ -216,7 +201,7 @@ def delete_task(task_id: int):
     row = cur.execute("SELECT id FROM tasks WHERE id=?", (task_id,)).fetchone()
     if not row:
         conn.close()
-        return jsonify({"error": "Tarea no encontrada"}), 404
+        return jsonify({"error": MSG_TASK_NOT_FOUND}), 404
 
     cur.execute("DELETE FROM tasks WHERE id=?", (task_id,))
     conn.commit()
